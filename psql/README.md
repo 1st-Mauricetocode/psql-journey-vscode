@@ -1233,7 +1233,336 @@ Example before/after
 
 `Amber C Ouma` → `AMBER C OUMA`
 
-|       maurice|     opiyo |
-|------------|-------------|
-|    10k        |  100k           |
-|    2000k        |         10000k    |
+
+####  3. Update all county names to UPPERCASE.
+
+preview first, by running:
+```
+SELECT id, UPPER(name) AS new_name
+FROM county;
+```
+before permanently updating using 
+```
+BEGIN;
+UPDATE county
+SET name = UPPER(name);
+
+```
+
+Explanation
+
+`UPDATE student` → we’re changing rows in the student table.
+
+`SET name =` ... → we’re modifying the name column.
+
+`UPPER(name)` → takes the existing value of name and converts all letters to uppercase.
+
+Example before/after
+
+`Amber K Ratemo` → `AMBER K RATEMO`
+
+`Amber C Ouma` → `AMBER C OUMA`
+
+
+in the Above question `2` and `3` We have used what is called a transaction, It is initiated by `BEGIN` command and then you will end it with a rollback if you dont want permanent changes or commit if you want permanet changes
+
+example
+```
+BEGIN;
+
+UPDATE student
+SET name = UPPER(name);
+
+COMMIT;
+```
+to show you want permenent cahnges.
+ ```
+ BEGIN;
+
+UPDATE student
+SET name = UPPER(name);
+
+ROLLBACK;
+```
+to not ,ake changes permanent or to not save the draft.
+```
+BEGIN;
+
+UPDATE county
+SET name = UPPER(name);
+
+COMMIT;
+```
+```
+BEGIN;
+
+UPDATE county
+SET name = UPPER(name);
+
+ROLLBACK;
+```
+
+#### Note to take.
+- functions are separated with commas.
+
+# TASK
+```
+Generate a select query that will show potential usernames for each student by combining first letter of first name, middle initial and lastname and last 4 digits of their phone number. eg.
+Student with the following details:
+Amber C. Atieno 0783-627-886
+Should generate a username such as (use lowercase for all characters):
+acatieno7886
+Display this username as an additional column/field - username.
+
+THE QUERY IS
+
+SELECT 
+  name,
+  phone,
+  LOWER(
+    regexp_replace(name, '^([A-Z]).*? ([A-Z]).*? ([A-Za-z]+).*$', '\1\2\3') 
+    || regexp_replace(regexp_replace(phone, '[^0-9]', '', 'g'), '.*([0-9]{4})$', '\1')
+  ) AS username
+FROM student;
+
+WHAT IS REGEXP REPLACE TRYING TO ACCOMPLISH HERE.
+THIS QUERY WILL GENERATE A USERNAME FROM PARTS OF NAME COLUMN AND THE FOUR LAST DIGITS OF THE PHONE NUMBER COLUMN.
+HERE IS THE PATTERN EXPLAINED.
+
+LOWER - This converts everything inside the parentheses to lowercase.
+That means the final username will always appear in small letters, e.g. jdoe3456.
+^([A-Z]) - Means that start of string is a capital letter from A-Z and it takes only the first word because it is only the first word that is a capital letter.
+.*? - matches any character lazily untill a space
+([A-Z]) - takes the middle intial which is a capital letter
+.*? - skips the rest untill another space.
+([A-Za-z]+) -takes the entire last name which is a mixture of small and capital letters.
+.*$ - end of line
+'\1\2\3' - capture group it combines the three funtions together
+regexp_replace( - the first regexp_replace deals with the 2 functions regexp_replace(..., '.*([0-9]{4})$', '\1') This takes only the last 4 digits of that cleaned phone number.
+
+'[0-9]{4}' → means "exactly four digits"
+
+'$' → means "at the end of the string"
+
+.* → any characters before
+
+'\1' → keeps just that 4-digit group
+Example
+0726-842-587  → gives "2587"
+
+Inner part:
+regexp_replace(phone, '[^0-9]', '', 'g')
+
+
+[^0-9] → means “any character that is not a digit”
+
+Replace it with '' (nothing)
+
+'g' → global flag = replace all non-digit characters
+
+So this removes spaces, dashes, brackets — leaving only numbers.
+Example:
+0726-842-587 → becomes 0726842587
+
+
+
+```
+
+####  4. Update all phone numbers so that they change from format 0707-155-302 to format 254707155302
+
+```
+BEGIN;
+
+UPDATE student
+SET phone = regexp_replace(regexp_replace(phone, '-', '', 'g'), '^0', '254');
+```
+`BEGIN` - Starts a transaction. Any changes you make (like updates or deletes) won’t be permanent until you run `COMMIT;`.
+
+`UPDATE` - Chooses the table named student to make changes in.
+
+`SET PHONE` - Tells PostgreSQL to update the phone column with a new value.
+
+`regexp_replace(phone, '-', '', 'g')` - This removes all dashes (`-`) from the phone number.
+`Example`: `0707-155-302` → `0707155302` `'g'` means “replace globally,” so all dashes in the number are removed.
+
+`regexp_replace(..., '^0', '254')` - The outer regexp_replace now looks at the result from the first one.It replaces the starting zero (`^0`) with `‘254’`. `Example`: `0707155302` → `254707155302`.
+
+```
+TASK I was to change emails @ globally
+I used 
+
+BEGIN;
+
+UPDATE student
+SET email = regexp_replace(email, '@', '.', 'g');
+```
+then check using `select * from student;` querry for both the task and number 4 then decide if you wana `COMMIT;` or `ROLLBACK;`.
+
+then in phone number is remove `'g'` for the global it will only remove the one dash and leave the second dash it will be like this `0783627-886` instead of `0783627886` and in email since there is only one `@` this means that if you remove `'g'` then nothing changes.
+
+####  5. Update records for students from TRANS, THARAKA and WEST counties so that they read TRANS-NZOIA, THARAKA-NITHI and WEST-POKOT respectively.
+```
+BEGIN;
+
+SELECT * FROM county;
+
+UPDATE county SET name = 'Trans-Nzoia'   WHERE name = 'Trans';
+UPDATE county SET name = 'Tharaka-Nithi' WHERE name = 'Tharaka';
+UPDATE county SET name = 'West-Pokot'    WHERE name = 'West';
+
+COMMIT;
+```
+
+Explanation:
+
+`BEGIN;` → starts your transaction (changes are not yet permanent).
+
+`SELECT * FROM county;` → shows all records before making updates (so you can confirm current names).
+
+`UPDATE` ... → updates county names:
+
+`'Trans'` → `'Trans-Nzoia'`
+
+`'Tharaka'` → `'Tharaka-Nithi'`
+
+`'West'` → `'West-Pokot'`
+
+`COMMIT;` → saves your changes permanently once everything looks good.
+
+If you see something wrong before COMMIT, you can type:
+`ROLLBACK;`
+Then the updated names by default comes at the bottom of the list.
+
+####  6. Update all students with ALICE .... to ALLISA.
+```
+BEGIN;                
+
+UPDATE student
+SET name = regexp_replace(name, '^Alice', 'Allisa')
+WHERE name ~ '^Alice';
+```
+
+####  7. Write an SQL query where that shows the letter grade using the following scale - If a student's average score is between:
+
+95 and 100 then the grade => 'A'
+
+90 and 95 then the grade => 'A-'
+
+85 and 90 then the grade => 'B+'
+
+80 and 85 then the grade => 'B'
+
+75 and 80 then the grade => 'B-'
+
+70 and 75 then the grade => 'C+'
+
+65 and 70 then the grade => 'C'
+
+60 and 65 then the grade => 'C-'
+
+55 and 60 then the grade => 'D+'
+
+50 and 55 then the grade => 'D'
+
+49 and below, the grade => 'FAIL'
+
+The results of the query should look as follows:
+
+ |   id   |         name         | score | grade |
+|--------|----------------------|--------|--------|
+|  1002  | Amber C Chacha       |   45   | FAIL  |
+|  1003  | Amber C Idris        |   82   | B     |
+|  1004  | Amber C Kamau        |   58   | D+    |
+|  1005  | Amber C Kimani       |   94   | A-    |
+|  1006  | Amber C Kiptoo       |   49   | FAIL  |
+|  1007  | Amber C Maribe       |   59   | D+    |
+|  1008  | Amber C Maxx         |   52   | D     |
+|  3120  | Zippy W Otieno       |   89   | B+    |
+|  3121  | Zippy W Ouma         |   91   | A-    |
+|  3122  | Zippy W Ratemo       |   64   | C-    |
+|  3123  | Zippy W Wambugu      |   91   | A-    |
+|  3124  | Zippy W Wanyonyi     |   59   | D+    |
+|  3125  | Zippy W Yegon        |   66   | C     |  
+
+## Securing postgreSQL Databases.
+
+1. What type of authentication did we utilize in the above user creation ie given that we have matched the database user to the Linux system username?
+
+```
+The above authentication is called peer authentication, If you are logged into Linux as a user named mopiyo, and there is a PostgreSQL role (database user) also called mopiyo, then you can connect to PostgreSQL without entering a password. PostgreSQL “peers” into the OS username and matches it.
+
+example 
+# Logged into Linux as pomollo
+
+psql -d exam
+
+This works without a password if:
+
+The pg_hba.conf file says to use peer for local connections,
+
+And a matching database role pomollo exists.
+
+Ident authentication is similar, but used more often with remote connections. It checks the connecting user’s identity using the Ident protocol. Both rely on the OS username, but:
+
+Peer = local connections only (Linux user = DB user).
+
+Ident = works for both local & remote (uses ident server or ident request).
+```
+
+2. What/how did the sed statement in step #9 help accomplish?
+
+```
+sed (Stream Editor) is a Linux command-line tool that edits text in files automatically.
+
+In the PostgreSQL setup steps, the sed command was likely used to:
+
+Uncomment configuration lines, or
+
+Replace the default md5 with scram-sha-256 in postgresql.conf or pg_hba.conf.
+
+For example:
+
+sudo sed -i "s/#password_encryption = md5/password_encryption = scram-sha-256/" /etc/postgresql/17/main/postgresql.conf
+
+
+This command:
+
+-i → edits the file in place.
+
+s/.../.../ → substitute text.
+
+It finds the line #password_encryption = md5 and changes it to password_encryption = scram-sha-256.
+
+Without this, you’d have to open vi and edit manually. So sed helps automate config changes.
+```
+
+Peer & Ident
+
+```
+Authentication methods explained
+Peer & Ident
+
+Peer → OS user must match DB role (local only).
+
+Ident → Uses Ident protocol to verify system username of the connecting user (local or remote).
+```
+
+`md5` vs `scram-sha-256`
+```
+MD5:
+
+Hashing method for passwords.
+
+Stored as md5<hash> in PostgreSQL.
+
+Vulnerable to collision attacks and dictionary attacks.
+
+SCRAM-SHA-256:
+
+Modern, safer hashing algorithm.
+
+Uses salt and iterations to slow brute-force attacks.
+
+Stored as SCRAM-SHA-256$... in PostgreSQL
+
+scram-sha-256:
