@@ -349,70 +349,87 @@ SELECT * FROM student WHERE first_name = 'Alice';
 ```
 ```
 SELECT * FROM student WHERE name LIKE 'Alice%';
-
+```
+```
 -- this one works because the like will look into the rows and find the row that begins with Alice and this is represented by this wildcard % it will list the rows starting with alice and any other word following it.
 ```
 ```
 SELECT COUNT(*) FROM student WHERE county_id = 1;
-
+```
+```
 -- this selects data from the table called student and see the column called county_id and takes the one which is mombasa and give its count, the output will have a title named count and the actual number of rows county id 1 was found.
-
+```
+```
 --Aliases (effects of capital letters on aliases 
 ```
 ```
 SELECT COUNT(*) AS "Mombasa" FROM student WHERE county_id = 1; 
-
+```
+```
 -- -- this selects data from the table called student and see the column called county_id and takes the one which is mombasa and give its count, the output will have a title named count and the actual number of rows county id 1 was found.but it is different from the above one because it has changed the title from Count to Mombasa using AS.
 ```
+
 ```
 SELECT COUNT(*) AS Total Students from Mombasa FROM student WHERE county_id = 1;
-
+```
+```
 -- Did not work because I did not double quote the title
 ```
+
 ```
 SELECT COUNT(*) AS "Total Students from Mombasa" FROM student WHERE county_id = 1;
-
+```
+```
 -- this selects data from the table called student and see the column called county_id and takes the one which is mombasa and give its count, the output will have a title named count and the actual number of rows county id 1 was found. but the title is now Total Students from Mombasa not count.
-
+```
+```
 -- Aliases
 ```
 ```
 SELECT COUNT(*) AS mombasa FROM student WHERE county_id = 1;
-
+```
+```
 -- will still work but the title mombasa will start with a small letter.
 ```
+
 ```
 SELECT COUNT(*) AS total_students FROM student WHERE county_name = 'Kisumu';
-
+```
+```
 -- “How can I count the number of students in a specific county without needing to know the county_id, only the county name?”
 ```
 ```
 SELECT county_id, COUNT(*) FROM student GROUP BY county_id;
-
+```
+```
 -- here we are selecting the table student column with county_id then in each county_id we take we group the number of times it has appeared in the rows in this data and then the output will have two columns one with county_id and another with the count each county id appear in a row in this dataset.
 ```
 ```
 SELECT county_id, COUNT(*) FROM student GROUP BY county_id ORDER BY county_id ASC;
-
+```
+```
 -- here we are selecting the table student column with county_id then in each county_id we take we group the number of times it has appeared in the rows in this data and then the output will have two columns one with county_id and another with the count each county id appear in a row in this dataset. But it was not in any order from 1 to 47 but this asc will arrange it in a ascending order.
 ```
 ```
 SELECT county_id, COUNT(*) FROM student GROUP BY county_id ORDER BY county_id;
-
--- order by county_id still puts it in an ascending order.
- 
 ```
+```
+-- order by county_id still puts it in an ascending order.
+ ```
 ```
 
 SELECT county_id, COUNT(*) FROM student GROUP BY county_id ORDER BY county_id DESC;
-
+```
+```
 -- here we are selecting the table student column with county_id then in each county_id we take we group the number of times it has appeared in the rows in this data and then the output will have two columns one with county_id and another with the count each county id appear in a row in this dataset. But it was not in any order from 47 to 1 but this asc will arrange it in a decending order.
-
+```
+```
 -- Add a New Column named (county name)
 ```
 ```
 ALTER TABLE student ADD COLUMN county name;
-
+```
+```
 -- ALTER TABLE means change or add something to the student table
 -- ADD COLUMN county_name TEXT means add a new column named county_name, and the data will be text (words)
 ```
@@ -433,7 +450,8 @@ Write the SQL queries needed to do all of the above.
 ```
 ```
 ALTER TABLE student ADD COLUMN county_name TEXT;
-
+```
+```
 /*
 ALTER TABLE means change or add something to the student table
 ADD COLUMN county_name TEXT means add a new column named county_name, and the data will be text (words)
@@ -488,7 +506,8 @@ UPDATE student SET county_name = 'Migori' WHERE county_id = 44;
 UPDATE student SET county_name = 'Kisii' WHERE county_id = 45;
 UPDATE student SET county_name = 'Nyamira' WHERE county_id = 46;
 UPDATE student SET county_name = 'Nairobi' WHERE county_id = 47;
-
+```
+```
 -- to test if it worked use
 ```
 ```
@@ -498,14 +517,16 @@ SELECT county_id, county_name, COUNT(*) FROM student GROUP BY county_id, county_
 
 SELECT REPLACE(name, ' C ', ' C. ') 
 FROM student;
+```
+```
 -- This will only replace the middle initial C From not having a period following it to having a period following it.
+
 ```
 ```
 SELECT REGEXP_REPLACE(name, ' ([A-Z]) ', ' \1. ') AS fixed_name
 FROM student;
-
-/*
 ```
+/*
 ```
 SELECT REGEXP_REPLACE(name, ' ([A-Z]) ', ' \1. ')
 ```
@@ -540,6 +561,63 @@ SELECT name,
        ) AS username
 FROM student;
 
+```
+we can also use regexp
+
+```
+SELECT 
+  name,
+  phone,
+  LOWER(
+    regexp_replace(name, '^([A-Z]).*? ([A-Z]).*? ([A-Za-z]+).*$', '\1\2\3') 
+    || right(regexp_replace(phone, '[^0-9]', '', 'g'), 4)
+  ) AS username
+FROM student;
+```
+or removing right we can use
+```
+SELECT 
+  name,
+  phone,
+  LOWER(
+    regexp_replace(name, '^([A-Z]).*? ([A-Z]).*? ([A-Za-z]+).*$', '\1\2\3') 
+    || regexp_replace(phone, '.*([0-9]{4})$', '\1')
+  ) AS username
+FROM student;
+
+the one below is the correct version of the one above
+SELECT 
+  name,
+  phone,
+  LOWER(
+    regexp_replace(name, '^([A-Z]).*? ([A-Z]).*? ([A-Za-z]+).*$', '\1\2\3') 
+    || regexp_replace(regexp_replace(phone, '[^0-9]', '', 'g'), '.*([0-9]{4})$', '\1')
+  ) AS username
+FROM student;
+
+```
+```
+/* explanation regexp_replace(phone, '[^0-9]', '', 'g') → remove everything that is not a number (like -, spaces).
+
+right(..., 4) → take the last 4 digits.
+
+Example: "0712-345-678" → "5678".
+
+Putting it together
+
+... || ... → join name part + last 4 phone digits.
+
+LOWER(...) → make it all lowercase.
+
+Final username example:
+Name = "John P Doe", Phone = "0712-345-678"
+Result = jpdoe5678
+
+This way we only use regexp_replace + right, no split_part, no left.
+
+Do you want me to make it even simpler (like not using regex groups, just stripping spaces and then taking pieces)? That would look even more "beginner style".*/
+```
+```
 /* Explanation
 
 SELECT here we are choosing what to show.
@@ -592,6 +670,8 @@ SELECT id, name, school_id
 FROM student
 WHERE name LIKE '%Ami%'
   AND school_id >= 90;
+```
+```
 /*Explanation in baby steps
 
 SELECT id, name, school_id → show me the id, name, and school_id (we are treating school_id as if it’s the score).
@@ -613,6 +693,8 @@ JOIN student_subject ss
   ON s.id = ss.student_id
 GROUP BY s.county_name
 ORDER BY average_score DESC;
+```
+```
 /*
 xplanation of the fix
 
@@ -633,8 +715,9 @@ JOIN county ON s.county_id = county.id
 JOIN school ON s.school_id = school.id
 WHERE county.name = 'Turkana';
  ```
- ```
+ 
  -- number 4
+```
 SELECT 
     s.name AS student_name,
     sub.name AS subject_name,
@@ -652,7 +735,8 @@ WHERE ss.score = (
     WHERE ss2.subject_id = ss.subject_id
 );
 
-
+```
+```
 /*explanation
 SELECT 
     s.name AS student_name,
@@ -746,12 +830,12 @@ Do you want me to rewrite this query in a simpler, step-by-step beginner version
 
 ```
 /* number 5. List the top 10 students in the country. Use the average score of all their subjects. Include a field that shows their ranks ie 1 to 10. Additionally, list the county and school name. */
-
-
+```
+```
 SELECT 
     s.name AS student_name,
     c.name AS county_name,
-    sc.name AS school_name,
+   1 sc.name AS school_name,
     ROUND(CAST(AVG(ss.score) AS numeric), 2) AS average_score,
     RANK() OVER (ORDER BY AVG(ss.score) DESC) AS student_rank
 FROM student_subject ss
@@ -761,8 +845,26 @@ JOIN county c ON s.county_id = c.id
 GROUP BY s.id, s.name, c.name, sc.name
 ORDER BY average_score DESC
 LIMIT 50;
-  
-/*Explanation
+```
+```
+  Use of Dense rank tied results
+
+  SELECT 
+  s.name AS student_name,
+  c.name AS county_name,
+  sc.name AS school_name,
+  ROUND(AVG(ss.score)::numeric, 2) AS average_score,
+  DENSE_RANK() OVER (ORDER BY ROUND(AVG(ss.score)::numeric, 2) DESC) AS student_rank
+FROM student_subject ss
+JOIN student s ON ss.student_id = s.id
+JOIN school sc ON s.school_id = sc.id
+JOIN county c ON s.county_id = c.id
+GROUP BY s.id, s.name, c.name, sc.name
+ORDER BY average_score DESC
+LIMIT 50;
+```
+```
+/*1st Explanation
 SELECT 
     s.name AS student_name,
     c.name AS county_name,
@@ -853,6 +955,66 @@ Their average score (rounded to 2 decimal places)
 
 Their rank (1 = best, 2 = second best, …)   */ 
 ```
+```
+2nd Explanation
+
+explanation
+
+SELECT → choose what data you want to see.
+
+s.name AS student_name → take the student’s name, give it a clear label student_name.
+
+c.name AS county_name → take county’s name, call it county_name.
+
+sc.name AS school_name → take school’s name, call it school_name.
+
+ROUND(AVG(ss.score)::numeric, 2) AS average_score →
+
+AVG(ss.score) = average of all scores per student.
+
+::numeric = cast (change) the type to numeric so we can round.
+
+ROUND(..., 2) = keep only 2 decimals.
+
+Call the result average_score.
+
+DENSE_RANK() OVER (ORDER BY ROUND(AVG(ss.score)::numeric, 2) DESC) AS student_rank →
+
+DENSE_RANK() = give ranking numbers.
+
+OVER (ORDER BY ... DESC) = sort by average score, highest first.
+
+If two people have the same average (after rounding), they get the same rank.
+
+No rank numbers are skipped (e.g. 1, 2, 2, 3).
+
+FROM + JOINs
+
+FROM student_subject ss → main table: scores.
+
+JOIN student s ON ss.student_id = s.id → link score to student.
+
+JOIN school sc ON s.school_id = sc.id → link student to school.
+
+JOIN county c ON s.county_id = c.id → link student to county.
+
+GROUP BY
+
+GROUP BY s.id, s.name, c.name, sc.name → needed because we are using AVG().
+It groups all rows of one student together so we can compute their average.
+
+ORDER BY
+
+ORDER BY average_score DESC → show highest average first.
+
+LIMIT
+
+LIMIT 50 → only show the top 50 rows.
+
+This is shorter than the CTE version, easier to defend as "beginner work," and it fixes the problem where ties didn’t rank the same.
+
+Would you like me to also show you a tiny sample table with results so you can actually see how ties now get the same rank (like two students with 95.74 both showing 17)? */
+```
 
 ```
 /*6. List the top schools (school name, total number of students in each school and county name) based on type/category ie top school:
@@ -862,6 +1024,8 @@ Provincial
 District
 Private*/
 
+```
+```
 SELECT 
     sc.name AS school_name,
     c.name AS county_name,
@@ -878,7 +1042,7 @@ JOIN student st ON st.school_id = sc.id
 JOIN county c ON sc.county_id = c.id
 GROUP BY sc.name, c.name, school_type
 ORDER BY school_type, total_students DESC;
-
+```
 
 /* 
 
@@ -899,7 +1063,7 @@ JOIN student st ON st.school_id = sc.id
 JOIN county c ON sc.county_id = c.id
 GROUP BY sc.name, c.name, school_type
 ORDER BY school_type, total_students DESC;
-
+```
 ---
 
 **Line by line explanation**
@@ -916,8 +1080,9 @@ SELECT
 * `AS county_name` renames it.
 
 ---
+```
+```
 
-sql
     CASE
         WHEN sc.name ILIKE '%National%' THEN 'National'
         WHEN sc.name ILIKE '%Provincial%' THEN 'Provincial'
@@ -925,7 +1090,8 @@ sql
         WHEN sc.name ILIKE '%Private%' THEN 'Private'
         ELSE 'Homeschool'
     END AS school_type,
-
+```
+```
 * `CASE ... END` is like an IF-THEN-ELSE.
 * It checks the school name text.
 * If the school name contains the word "National", then it is labeled as `National`.
@@ -974,3 +1140,100 @@ This query lists schools with their county, their type (National, Provincial, Di
 
 Would you like me to rewrite this same query in a way that looks like a beginner built it step by step (first without CASE, then adding it later)?
 ```
+
+
+# Update Data Questions
+
+The following involve updating records, tables, or deleting records. Make use of database transactions to be safe.
+
+#### 1. Delete all records for students with the name Joan and be careful not to delete Joanne
+
+First before deleting make sure you use `SELECT`  command to ensure that you are deleting the correct data 
+
+eg for the above.
+```
+SELECT * FROM student
+WHERE name ~ '^Joan(\s|$)';
+```
+explanation
+
+`^` → start of string
+
+`Joan` → literal text Joan
+
+`(\s|$)` → followed by either space or end of string
+This blocks Joanne because after Joan comes n, not a space or end.
+
+but this
+```
+SELECT * FROM student
+WHERE name ~ '^Joan';
+```
+Explanation:
+
+`^Joan` → start of string, then Joan.
+
+Nothing after it is restricted, so it will match:
+
+`Joan`
+
+`Joan Atieno`
+
+`Joanne`
+
+`Joanette`
+
+anything starting with `Joan`.
+
+But careful: this means it will also select Joanita, Joanice, etc.
+and it will also select `Joanne`
+but also Joanne Atieno or Joana is also is selected
+
+so 
+```
+SELECT * FROM student
+WHERE name ~ '^(Joan|Joanne)(\s|$)';
+ ```
+ strictly selects `Joan` and `Joanne`
+
+ delete query
+
+ ```
+ DELETE FROM student
+WHERE name ~ '^Joan(\s|$)';
+```
+
+#### is there a way to restore the data after deleting??
+
+####  2. Update all students names to UPPERCASE so that e.g. Amber K Ratemo becomes AMBER K RATEMO
+
+preview first, by running:
+```
+SELECT id, UPPER(name) AS new_name
+FROM student;
+```
+before permanently updating using 
+```
+UPDATE student
+SET name = UPPER(name);
+
+```
+
+Explanation
+
+`UPDATE student` → we’re changing rows in the student table.
+
+`SET name =` ... → we’re modifying the name column.
+
+`UPPER(name)` → takes the existing value of name and converts all letters to uppercase.
+
+Example before/after
+
+`Amber K Ratemo` → `AMBER K RATEMO`
+
+`Amber C Ouma` → `AMBER C OUMA`
+
+|       maurice|     opiyo |
+|------------|-------------|
+|    10k        |  100k           |
+|    2000k        |         10000k    |
